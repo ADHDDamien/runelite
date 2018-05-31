@@ -30,10 +30,12 @@ package net.runelite.client.plugins.devtools;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 import java.util.HashMap;
@@ -246,7 +248,7 @@ class WidgetInspector extends JFrame
 	private List<Integer> getGroupIDs()
 	{
 		WidgetInfo[] widgets = WidgetInfo.values();
-		List<Integer> groupIDs = new ArrayList<Integer>();
+		List<Integer> groupIDs = new ArrayList<>();
 		//Important fix to trigger null errors before we add to list in the try/catch by calling a null ID on purpose
 		int errorCheck;
 		for (WidgetInfo w : widgets)

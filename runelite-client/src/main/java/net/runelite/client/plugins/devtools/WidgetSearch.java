@@ -24,7 +24,7 @@
  */
 package net.runelite.client.plugins.devtools;
 
-import java.awt.*;
+import java.awt.Rectangle;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Point;
 import net.runelite.api.widgets.Widget;
