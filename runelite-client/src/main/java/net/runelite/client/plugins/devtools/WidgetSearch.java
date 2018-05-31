@@ -33,12 +33,7 @@ import net.runelite.api.widgets.Widget;
 public class WidgetSearch
 {
 
-
-	//HashMap fields = new HashMap();
 	WidgetSearchMap searchList = new WidgetSearchMap();
-
-
-
 	public void searchRequest(String search)
 	{
 		//reset hashmap for new searches
