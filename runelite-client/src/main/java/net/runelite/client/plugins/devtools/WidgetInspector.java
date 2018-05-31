@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018 Abex
+ * Copyright (c) 2018, ADHDDamien <https://github.com/ADHDDamien>
+ * Copyright (c) 2018, Abex
  * Copyright (c) 2017, Kronos <https://github.com/KronosDesign>
  * Copyright (c) 2017, Adam <Adam@sigterm.info>
  * All rights reserved.
@@ -26,26 +27,21 @@
  */
 package net.runelite.client.plugins.devtools;
 
+import com.google.common.base.Strings;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+
+import net.runelite.api.GameState;
+import net.runelite.api.Point;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JTable;
-import javax.swing.JTree;
-import javax.swing.SwingWorker;
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +51,23 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.api.widgets.WidgetItem;
 import net.runelite.client.ui.ClientUI;
+import net.runelite.api.events.MenuOptionClicked;
+
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.SwingWorker;
+import javax.swing.tree.TreePath;
 
 @Slf4j
 class WidgetInspector extends JFrame
@@ -66,8 +79,15 @@ class WidgetInspector extends JFrame
 	private final JTree widgetTree;
 	private final WidgetInfoTableModel infoTableModel;
 	private final JCheckBox alwaysOnTop;
+	private final JButton nextSearch;
+	private boolean Ready;
+	private boolean isSearching = false;
+	private int searchIndex = 0;
 
 	private static final Map<Integer, WidgetInfo> widgetIdMap = new HashMap<>();
+	WidgetSearch widgetSearch = new WidgetSearch();
+	List<DefaultMutableTreeNode> searchNodes = new ArrayList<>();
+	List<Widget> widgetResults = new ArrayList<>();
 
 	@Inject
 	WidgetInspector(DevToolsPlugin plugin, Client client, WidgetInfoTableModel infoTableModel, DevToolsConfig config, EventBus eventBus)
@@ -95,9 +115,13 @@ class WidgetInspector extends JFrame
 
 		setLayout(new BorderLayout());
 
+
+
+
 		widgetTree = new JTree(new DefaultMutableTreeNode());
 		widgetTree.setRootVisible(false);
 		widgetTree.setShowsRootHandles(true);
+		//temporarily disabled while we try to programmatically select nodes, otherwise the event fires and resets shit.
 		widgetTree.getSelectionModel().addTreeSelectionListener(e ->
 		{
 			Object selected = widgetTree.getLastSelectedPathComponent();
@@ -123,17 +147,46 @@ class WidgetInspector extends JFrame
 
 
 		final JTable widgetInfo = new JTable(infoTableModel);
-
 		final JScrollPane infoScrollPane = new JScrollPane(widgetInfo);
 		infoScrollPane.setPreferredSize(new Dimension(400, 400));
+
 
 
 		final JPanel bottomPanel = new JPanel();
 		add(bottomPanel, BorderLayout.SOUTH);
 
-		final JButton refreshWidgetsBtn = new JButton("Refresh");
-		refreshWidgetsBtn.addActionListener(e -> refreshWidgets());
+		final JButton refreshWidgetsBtn = new JButton("Load Widgets");
+		refreshWidgetsBtn.addActionListener(e -> {
+			if (client.getGameState().equals(GameState.LOGGED_IN))
+			{
+				refreshWidgets(client.getWidgetRoots());
+			}
+			else{
+				JOptionPane.showMessageDialog(null,"Please log in to the game before trying to load widgets.");
+			}
+		});
 		bottomPanel.add(refreshWidgetsBtn);
+
+		final JButton EyedropWidgetsBtn = new JButton("Select in-game Widgets");
+		EyedropWidgetsBtn.addActionListener(e -> {
+			if (client.getGameState().equals(GameState.LOGGED_IN))
+			{
+				Ready = true;
+			}
+			else{
+				JOptionPane.showMessageDialog(null,"Please log in to the game before trying to load widgets.");
+			}
+		});
+		bottomPanel.add(EyedropWidgetsBtn);
+
+		final JButton searchHelpBtn = new JButton("Search Help");
+		searchHelpBtn.addActionListener(e -> searchHelp());
+		bottomPanel.add(searchHelpBtn);
+
+		nextSearch = new JButton("Next Result");
+		nextSearch.addActionListener(e -> nextResult());
+		bottomPanel.add(nextSearch);
+		nextSearch.setEnabled(false);
 
 		alwaysOnTop = new JCheckBox("Always on top");
 		alwaysOnTop.addItemListener(ev -> config.inspectorAlwaysOnTop(alwaysOnTop.isSelected()));
@@ -141,11 +194,43 @@ class WidgetInspector extends JFrame
 		bottomPanel.add(alwaysOnTop);
 
 
+		final JTextField searchField = new JTextField("Search");
+		searchField.setBackground(Color.GRAY);
+		searchField.setText("Enter search here...");
+		searchField.addActionListener(e -> search(searchField.getText()));
+		JScrollPane scrollPane = new JScrollPane(searchField);
+
+		add(scrollPane, BorderLayout.NORTH);
+
 		final JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeScrollPane, infoScrollPane);
 		add(split, BorderLayout.CENTER);
-
 		pack();
 	}
+
+
+	@Subscribe
+	public void onMenuOptionClicked(MenuOptionClicked event) {
+		if(Ready)
+		{
+			Point mouse = client.getMouseCanvasPosition();
+			List<Integer> groupIDs = getGroupIDs();
+			Widget[] eyedropWidgets = new Widget[1000];
+			event.consume();
+			for( int id = 0; id < groupIDs.size(); id++)
+			{
+				for (int i = 0; i < client.getGroup(groupIDs.get(id)).length; i++)
+				{
+					if(client.getWidget(groupIDs.get(id), i).contains(mouse))
+					{
+						eyedropWidgets[i] = client.getWidget(groupIDs.get(id), i);
+					}
+				}
+			}
+			refreshWidgets(eyedropWidgets);
+			Ready = false;
+		}
+	}
+
 
 	@Subscribe
 	private void onConfigChanged(ConfigChanged ev)
@@ -155,25 +240,112 @@ class WidgetInspector extends JFrame
 		alwaysOnTop.setSelected(onTop);
 	}
 
-	private void refreshWidgets()
+	private void searchHelp(){
+		JOptionPane.showMessageDialog(null, "Search examples: \n\nId:10747904 where 10747904 is the Widget ID you are searching for\n\nCanvasLocation:0,0 with 0,0 being the X & Y in the Point\n\nText:Bank Of Runescape\n\nHidden=true where true is the boolean result you are searching for, etc.\n\nMultiple searches:\n\nChain searches with a pipe separating each search term for example Width:1642|Height:1057 or Text:Bank Of Runescape|Hidden:false\n\nThe enter key submits your search.");
+
+	}
+	private List<Integer> getGroupIDs(){
+		WidgetInfo[] widgets = WidgetInfo.values();
+		List<Integer> groupIDs = new ArrayList<Integer>();
+		//Important fix to trigger null errors before we add to list in the try/catch by calling a null ID on purpose
+		int errorCheck;
+		for (WidgetInfo w : widgets)
+		{
+			try{
+				//Do not remove this line of code or everything breaks
+				errorCheck = client.getGroup(w.getGroupId()).length;
+				if(!groupIDs.contains(w.getGroupId())){
+					groupIDs.add(w.getGroupId());
+				}
+			} catch(RuntimeException e){
+			}
+		}
+		return groupIDs;
+	}
+
+
+	private void search(String search){
+		if (client.getGameState().equals(GameState.LOGGED_IN))
+		{
+			searchIndex = 0;
+			searchNodes.clear();
+			widgetResults.clear();
+			isSearching = true;
+			widgetSearch.searchRequest(search);
+			refreshWidgets(client.getWidgetRoots());
+
+		} else{
+			JOptionPane.showMessageDialog(null,"Please log in to the game before trying to search widgets.");
+		}
+	}
+
+	private void nextResult(){
+		searchIndex++;
+		if(searchIndex < searchNodes.size())
+		{
+			plugin.currentWidget = widgetResults.get(searchIndex);
+			plugin.itemIndex = -1;
+			refreshInfo();
+
+			widgetTree.expandPath(new TreePath(searchNodes.get(searchIndex).getPath()));
+			widgetTree.setSelectionPath(new TreePath(searchNodes.get(searchIndex).getPath()));
+			nextSearch.setText("Next Result: " + String.valueOf(searchIndex + 1) + "/" + searchNodes.size());
+		}
+
+		if(searchIndex >= searchNodes.size())
+		{
+			//if we roll over the results start back at 0
+			searchIndex = 0;
+			plugin.currentWidget = widgetResults.get(searchIndex);
+			plugin.itemIndex = -1;
+			refreshInfo();
+
+			widgetTree.expandPath(new TreePath(searchNodes.get(searchIndex).getPath()));
+			widgetTree.setSelectionPath(new TreePath(searchNodes.get(searchIndex).getPath()));
+			nextSearch.setText("Next Result: " + String.valueOf(searchIndex + 1) + "/" + searchNodes.size());
+		}
+	}
+
+	private void updateSearch(){
+		plugin.currentWidget = widgetResults.get(0);
+		plugin.itemIndex = -1;
+		refreshInfo();
+		widgetTree.expandPath(new TreePath(searchNodes.get(0).getPath()));
+		widgetTree.setSelectionPath(new TreePath(searchNodes.get(0).getPath()));
+		nextSearch.setEnabled(true);
+		nextSearch.setText("Next Result: " + String.valueOf(searchIndex + 1) + "/" + searchNodes.size());
+		isSearching = false;
+	}
+
+	private void refreshWidgets(Widget[] widgets )
 	{
 		new SwingWorker<DefaultMutableTreeNode, Void>()
 		{
 			@Override
 			protected DefaultMutableTreeNode doInBackground() throws Exception
 			{
-				Widget[] rootWidgets = client.getWidgetRoots();
+				Widget[] rootWidgets = widgets;
 				DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-
-				plugin.currentWidget = null;
-				plugin.itemIndex = -1;
+				if(!isSearching)
+				{
+					plugin.currentWidget = null;
+					plugin.itemIndex = -1;
+				}
 
 				for (Widget widget : rootWidgets)
 				{
 					DefaultMutableTreeNode childNode = addWidget("R", widget);
-					if (childNode != null)
-					{
+					if(childNode != null){
 						root.add(childNode);
+
+						if(isSearching)
+						{
+							if(widgetSearch.widgetResults(widget))
+							{
+								searchNodes.add(childNode);
+								widgetResults.add(widget);
+							}
+						}
 					}
 				}
 
@@ -189,6 +361,15 @@ class WidgetInspector extends JFrame
 					plugin.itemIndex = -1;
 					refreshInfo();
 					widgetTree.setModel(new DefaultTreeModel(get()));
+					if(isSearching)
+					{
+						updateSearch();
+					} else {
+						//reset search iterator button if loading widgets and not searching
+						searchIndex = 0;
+						nextSearch.setText("Next Result");
+						nextSearch.setEnabled(false);
+					}
 				}
 				catch (InterruptedException | ExecutionException ex)
 				{
@@ -196,7 +377,8 @@ class WidgetInspector extends JFrame
 				}
 			}
 		}.execute();
-	}
+		}
+
 
 	private DefaultMutableTreeNode addWidget(String type, Widget widget)
 	{
@@ -216,6 +398,15 @@ class WidgetInspector extends JFrame
 				if (childNode != null)
 				{
 					node.add(childNode);
+
+					if(isSearching)
+					{
+						if(widgetSearch.widgetResults(component))
+						{
+							searchNodes.add(childNode);
+							widgetResults.add(component);
+						}
+					}
 				}
 			}
 		}
@@ -229,6 +420,14 @@ class WidgetInspector extends JFrame
 				if (childNode != null)
 				{
 					node.add(childNode);
+					if(isSearching)
+					{
+						if(widgetSearch.widgetResults(component))
+						{
+							searchNodes.add(childNode);
+							widgetResults.add(component);
+						}
+					}
 				}
 			}
 		}
@@ -242,11 +441,22 @@ class WidgetInspector extends JFrame
 				if (childNode != null)
 				{
 					node.add(childNode);
+					if(isSearching)
+					{
+						if(widgetSearch.widgetResults(component))
+						{
+							searchNodes.add(childNode);
+							widgetResults.add(component);
+						}
+					}
 				}
 			}
 		}
 
 		Collection<WidgetItem> items = widget.getWidgetItems();
+
+
+
 		if (items != null)
 		{
 			for (WidgetItem item : items)
@@ -255,7 +465,6 @@ class WidgetInspector extends JFrame
 				{
 					continue;
 				}
-
 				node.add(new WidgetItemNode(item));
 			}
 		}
@@ -270,6 +479,7 @@ class WidgetInspector extends JFrame
 
 	public static WidgetInfo getWidgetInfo(int packedId)
 	{
+
 		if (widgetIdMap.size() == 0)
 		{
 			//Initialize map here so it doesn't create the index
@@ -280,6 +490,7 @@ class WidgetInspector extends JFrame
 				widgetIdMap.put(w.getPackedId(), w);
 			}
 		}
+
 
 		return widgetIdMap.get(packedId);
 	}
