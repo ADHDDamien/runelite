@@ -143,7 +143,6 @@ class WidgetInspector extends JFrame
 		final JScrollPane searchFieldPane = new JScrollPane(widgetInfo);
 		searchFieldPane.setPreferredSize(new Dimension(400, 400));
 
-		//final JPanel bottomPanel = new JPanel();
 		final JPanel bottomPanel = new JPanel();
 		add(bottomPanel, BorderLayout.SOUTH);
 
