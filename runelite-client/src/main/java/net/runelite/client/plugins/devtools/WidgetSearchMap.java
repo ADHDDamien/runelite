@@ -29,7 +29,6 @@ import java.util.Map;
 
 public class WidgetSearchMap
 {
-
 	private final Map<String, Object> baseMap;
 
 	public WidgetSearchMap()
