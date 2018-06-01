@@ -175,7 +175,7 @@ class WidgetInspector extends JFrame
 		bottomPanel.add(widgetSelectorBtn);
 
 		final JButton searchHelpBtn = new JButton("Search Help");
-		searchHelpBtn.addActionListener(e -> JOptionPane.showMessageDialog(null, "Search examples: \nId:10747904 where 10747904 is the Widget ID you are searching for\n\nCanvasLocation:0,0 with 0,0 being the X & Y in the Point\n\nText:Bank Of Runescape (Partial text searches work as well)\n\nHidden=true where true is the boolean result you are searching for, etc.\nAll fields are searchable.\n\nMultiple searches:\nChain searches with a pipe separating each search term for example Width:1642|Height:1057 or Text:Bank Of Runescape|Hidden:false\n\nThe enter key submits your search."));
+		searchHelpBtn.addActionListener(e -> JOptionPane.showMessageDialog(null, "Search examples: \nId:10747904 where 10747904 is the Widget ID you are searching for\n\nCanvasLocation:0,0 with 0,0 being the X & Y in the Point\n\nText:Bank Of Runescape (Partial text searches work as well)\n\nHidden=true where true is the boolean result you are searching for, etc.\n\nAll fields are searchable.\n\nMultiple searches:\nChain searches with a pipe separating each search term to get more exact results, for example Width:1642|Height:1057 or Text:Bank Of Runescape|Hidden:false\n\nThe enter key submits your search."));
 		bottomPanel.add(searchHelpBtn);
 
 		nextResultBtn = new JButton("Next Result");
