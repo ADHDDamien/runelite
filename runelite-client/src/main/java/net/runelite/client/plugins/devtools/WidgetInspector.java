@@ -69,22 +69,21 @@ import net.runelite.client.ui.ClientUI;
 class WidgetInspector extends JFrame
 {
 	private final Client client;
-	private final DevToolsConfig config;
 	private final DevToolsPlugin plugin;
-	private final WidgetInfoTableModel infoTableModel;
+	private final DevToolsConfig config;
 
-	private final JButton nextResultBtn;
-	private final JCheckBox alwaysOnTop;
 	private final JTree widgetTree;
-
-	private List<DefaultMutableTreeNode> searchNodes = new ArrayList<>();
-	private List<Widget> widgetResults = new ArrayList<>();
-	private WidgetSearch widgetSearch = new WidgetSearch();
-	private static final Map<Integer, WidgetInfo> widgetIdMap = new HashMap<>();
-
-	private boolean readyToSelect;
+	private final WidgetInfoTableModel infoTableModel;
+	private final JCheckBox alwaysOnTop;
+	private final JButton nextSearch;
+	private boolean Ready;
 	private boolean isSearching = false;
 	private int searchIndex = 0;
+
+	private static final Map<Integer, WidgetInfo> widgetIdMap = new HashMap<>();
+	WidgetSearch widgetSearch = new WidgetSearch();
+	List<DefaultMutableTreeNode> searchNodes = new ArrayList<>();
+	List<Widget> widgetResults = new ArrayList<>();
 
 	@Inject
 	WidgetInspector(DevToolsPlugin plugin, Client client, WidgetInfoTableModel infoTableModel, DevToolsConfig config, EventBus eventBus)
@@ -112,6 +111,9 @@ class WidgetInspector extends JFrame
 
 		setLayout(new BorderLayout());
 
+
+
+
 		widgetTree = new JTree(new DefaultMutableTreeNode());
 		widgetTree.setRootVisible(false);
 		widgetTree.setShowsRootHandles(true);
@@ -138,12 +140,13 @@ class WidgetInspector extends JFrame
 		final JScrollPane treeScrollPane = new JScrollPane(widgetTree);
 		treeScrollPane.setPreferredSize(new Dimension(200, 400));
 
+
 		final JTable widgetInfo = new JTable(infoTableModel);
+		final JScrollPane infoScrollPane = new JScrollPane(widgetInfo);
+		infoScrollPane.setPreferredSize(new Dimension(400, 400));
 
-		final JScrollPane searchFieldPane = new JScrollPane(widgetInfo);
-		searchFieldPane.setPreferredSize(new Dimension(400, 400));
 
-		//final JPanel bottomPanel = new JPanel();
+
 		final JPanel bottomPanel = new JPanel();
 		add(bottomPanel, BorderLayout.SOUTH);
 
@@ -161,45 +164,72 @@ class WidgetInspector extends JFrame
 		});
 		bottomPanel.add(refreshWidgetsBtn);
 
-		final JButton widgetSelectorBtn = new JButton("Select in-game Widgets");
-		widgetSelectorBtn.addActionListener(e ->
+		final JButton EyedropWidgetsBtn = new JButton("Select in-game Widgets");
+		EyedropWidgetsBtn.addActionListener(e ->
 		{
 			if (client.getGameState().equals(GameState.LOGGED_IN))
 			{
-				readyToSelect = true;
+				Ready = true;
 			}
 			else
 				{
 				JOptionPane.showMessageDialog(null, "Please log in to the game before trying to load widgets.");
 			}
 		});
-		bottomPanel.add(widgetSelectorBtn);
+		bottomPanel.add(EyedropWidgetsBtn);
 
 		final JButton searchHelpBtn = new JButton("Search Help");
-		searchHelpBtn.addActionListener(e -> JOptionPane.showMessageDialog(null, "Search examples: \nId:10747904 where 10747904 is the Widget ID you are searching for\n\nCanvasLocation:0,0 with 0,0 being the X & Y in the Point\n\nText:Bank Of Runescape (Partial text searches work as well)\n\nHidden=true where true is the boolean result you are searching for, etc.\nAll fields are searchable.\n\nMultiple searches:\nChain searches with a pipe separating each search term for example Width:1642|Height:1057 or Text:Bank Of Runescape|Hidden:false\n\nThe enter key submits your search."));
+		searchHelpBtn.addActionListener(e -> JOptionPane.showMessageDialog(null, "Search examples: \n\nId:10747904 where 10747904 is the Widget ID you are searching for\n\nCanvasLocation:0,0 with 0,0 being the X & Y in the Point\n\nText:Bank Of Runescape\n\nHidden=true where true is the boolean result you are searching for, etc.\n\nMultiple searches:\n\nChain searches with a pipe separating each search term for example Width:1642|Height:1057 or Text:Bank Of Runescape|Hidden:false\n\nThe enter key submits your search."));
 		bottomPanel.add(searchHelpBtn);
 
-		nextResultBtn = new JButton("Next Result");
-		nextResultBtn.addActionListener(e -> nextResult());
-		nextResultBtn.setEnabled(false);
-		bottomPanel.add(nextResultBtn);
+		nextSearch = new JButton("Next Result");
+		nextSearch.addActionListener(e -> nextResult());
+		nextSearch.setEnabled(false);
+		bottomPanel.add(nextSearch);
 
 		alwaysOnTop = new JCheckBox("Always on top");
 		alwaysOnTop.addItemListener(ev -> config.inspectorAlwaysOnTop(alwaysOnTop.isSelected()));
 		onConfigChanged(null);
 		bottomPanel.add(alwaysOnTop);
 
+
 		final JTextField searchField = new JTextField("Search");
 		searchField.setBackground(Color.GRAY);
 		searchField.setText("Enter search here...");
-		searchField.addActionListener(e -> startSearch(searchField.getText()));
+		searchField.addActionListener(e -> search(searchField.getText()));
 		JScrollPane scrollPane = new JScrollPane(searchField);
 
 		add(scrollPane, BorderLayout.NORTH);
 
-		final JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeScrollPane, searchFieldPane);
+		final JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeScrollPane, infoScrollPane);
 		add(split, BorderLayout.CENTER);
 		pack();
+	}
+
+
+
+	@Subscribe
+	public void onMenuOptionClicked(MenuOptionClicked event)
+	{
+		if (Ready)
+		{
+			Point mouse = client.getMouseCanvasPosition();
+			List<Integer> groupIDs = getGroupIDs();
+			Widget[] eyedropWidgets = new Widget[1000];
+			event.consume();
+			for ( int id = 0; id < groupIDs.size(); id++)
+			{
+				for (int i = 0; i < client.getGroup(groupIDs.get(id)).length; i++)
+				{
+					if (client.getWidget(groupIDs.get(id), i).contains(mouse))
+					{
+						eyedropWidgets[i] = client.getWidget(groupIDs.get(id), i);
+					}
+				}
+			}
+			refreshWidgets(eyedropWidgets);
+			Ready = false;
+		}
 	}
 
 	@Subscribe
@@ -210,46 +240,36 @@ class WidgetInspector extends JFrame
 		alwaysOnTop.setSelected(onTop);
 	}
 
-	@Subscribe
-	private void onWidgetClick(MenuOptionClicked event)
+	private void searchHelp()
 	{
-		if (readyToSelect)
-		{
-
-			List<Integer> groupIDs = new ArrayList<>();
-			Point mouse = client.getMouseCanvasPosition();
-			WidgetInfo[] widgets = WidgetInfo.values();
-			Widget[] locatedWidgets = new Widget[1000];
-			event.consume();
-
-			for (WidgetInfo w : widgets)
-			{
-				if (client.getGroup(w.getGroupId()) != null)
-				{
-					if (!groupIDs.contains(w.getGroupId()))
-					{
-						groupIDs.add(w.getGroupId());
-					}
-				}
-			}
-
-			for ( int id = 0; id < groupIDs.size(); id++)
-			{
-				for (int i = 0; i < client.getGroup(groupIDs.get(id)).length; i++)
-				{
-					if (client.getWidget(groupIDs.get(id), i).contains(mouse))
-					{
-						locatedWidgets[i] = client.getWidget(groupIDs.get(id), i);
-					}
-				}
-			}
-
-			refreshWidgets(locatedWidgets);
-			readyToSelect = false;
-		}
+		JOptionPane.showMessageDialog(null, "Search examples: \n\nId:10747904 where 10747904 is the Widget ID you are searching for\n\nCanvasLocation:0,0 with 0,0 being the X & Y in the Point\n\nText:Bank Of Runescape\n\nHidden=true where true is the boolean result you are searching for, etc.\n\nMultiple searches:\n\nChain searches with a pipe separating each search term for example Width:1642|Height:1057 or Text:Bank Of Runescape|Hidden:false\n\nThe enter key submits your search.");
 	}
 
-	private void startSearch(String search)
+	private List<Integer> getGroupIDs()
+	{
+		WidgetInfo[] widgets = WidgetInfo.values();
+		List<Integer> groupIDs = new ArrayList<>();
+		//Important fix to trigger null errors before we add to list in the try/catch by calling a null ID on purpose
+		int errorCheck;
+		for (WidgetInfo w : widgets)
+		{
+			try
+			{
+				//Do not remove this line of code or everything breaks
+				errorCheck = client.getGroup(w.getGroupId()).length;
+				if (!groupIDs.contains(w.getGroupId()))
+				{
+					groupIDs.add(w.getGroupId());
+				}
+			}
+			catch (RuntimeException e)
+			{
+			}
+		}
+		return groupIDs;
+	}
+
+	private void search(String search)
 	{
 		if (client.getGameState().equals(GameState.LOGGED_IN))
 		{
@@ -269,23 +289,38 @@ class WidgetInspector extends JFrame
 	private void nextResult()
 	{
 		searchIndex++;
+		if (searchIndex < searchNodes.size())
+		{
+			plugin.currentWidget = widgetResults.get(searchIndex);
+			plugin.itemIndex = -1;
+			refreshInfo();
+			widgetTree.expandPath(new TreePath(searchNodes.get(searchIndex).getPath()));
+			widgetTree.setSelectionPath(new TreePath(searchNodes.get(searchIndex).getPath()));
+			nextSearch.setText("Next Result: " + String.valueOf(searchIndex + 1) + "/" + searchNodes.size());
+		}
+
 		if (searchIndex >= searchNodes.size())
 		{
 			searchIndex = 0;
+			plugin.currentWidget = widgetResults.get(searchIndex);
+			plugin.itemIndex = -1;
+			refreshInfo();
+			widgetTree.expandPath(new TreePath(searchNodes.get(searchIndex).getPath()));
+			widgetTree.setSelectionPath(new TreePath(searchNodes.get(searchIndex).getPath()));
+			nextSearch.setText("Next Result: " + String.valueOf(searchIndex + 1) + "/" + searchNodes.size());
 		}
-		updateResults();
 	}
 
-	private void updateResults()
+	private void updateSearch()
 	{
-		plugin.currentWidget = widgetResults.get(searchIndex);
+		plugin.currentWidget = widgetResults.get(0);
 		plugin.itemIndex = -1;
 		refreshInfo();
-
-		widgetTree.expandPath(new TreePath(searchNodes.get(searchIndex).getPath()));
-		widgetTree.setSelectionPath(new TreePath(searchNodes.get(searchIndex).getPath()));
-		nextResultBtn.setText("Next Result: " + String.valueOf(searchIndex + 1) + "/" + searchNodes.size());
-		pack();
+		widgetTree.expandPath(new TreePath(searchNodes.get(0).getPath()));
+		widgetTree.setSelectionPath(new TreePath(searchNodes.get(0).getPath()));
+		nextSearch.setEnabled(true);
+		nextSearch.setText("Next Result: " + String.valueOf(searchIndex + 1) + "/" + searchNodes.size());
+		isSearching = false;
 	}
 
 	private void refreshWidgets(Widget[] widgets )
@@ -311,7 +346,7 @@ class WidgetInspector extends JFrame
 						root.add(childNode);
 						if (isSearching)
 						{
-							if (widgetSearch.isMatch(widget))
+							if (widgetSearch.widgetResults(widget))
 							{
 								searchNodes.add(childNode);
 								widgetResults.add(widget);
@@ -334,16 +369,14 @@ class WidgetInspector extends JFrame
 					widgetTree.setModel(new DefaultTreeModel(get()));
 					if (isSearching)
 					{
-						updateResults();
-						nextResultBtn.setEnabled(true);
-						isSearching = false;
+						updateSearch();
 					}
 					else
 						{
 						//reset search iterator button if loading widgets and not searching
 						searchIndex = 0;
-						nextResultBtn.setText("Next Result");
-						nextResultBtn.setEnabled(false);
+						nextSearch.setText("Next Result");
+						nextSearch.setEnabled(false);
 					}
 				}
 				catch (InterruptedException | ExecutionException ex)
@@ -375,7 +408,7 @@ class WidgetInspector extends JFrame
 
 					if (isSearching)
 					{
-						if (widgetSearch.isMatch(component))
+						if (widgetSearch.widgetResults(component))
 						{
 							searchNodes.add(childNode);
 							widgetResults.add(component);
@@ -396,7 +429,7 @@ class WidgetInspector extends JFrame
 					node.add(childNode);
 					if (isSearching)
 					{
-						if (widgetSearch.isMatch(component))
+						if (widgetSearch.widgetResults(component))
 						{
 							searchNodes.add(childNode);
 							widgetResults.add(component);
@@ -417,7 +450,7 @@ class WidgetInspector extends JFrame
 					node.add(childNode);
 					if (isSearching)
 					{
-						if (widgetSearch.isMatch(component))
+						if (widgetSearch.widgetResults(component))
 						{
 							searchNodes.add(childNode);
 							widgetResults.add(component);
