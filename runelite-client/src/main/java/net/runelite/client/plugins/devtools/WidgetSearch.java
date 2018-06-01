@@ -25,6 +25,7 @@
 package net.runelite.client.plugins.devtools;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Point;
 import net.runelite.api.widgets.Widget;
@@ -32,13 +33,11 @@ import net.runelite.api.widgets.Widget;
 @Slf4j
 public class WidgetSearch
 {
-
-	WidgetSearchMap searchList = new WidgetSearchMap();
+	WidgetSearchMap searchTerms = new WidgetSearchMap();
 	public void searchRequest(String search)
 	{
 		//reset hashmap for new searches
-		searchList.clear();
-
+		searchTerms.clear();
 		//convert to lowercase for easier handling
 		search = search.toLowerCase();
 		//separate : and spaces in search to get field names and values with regex.
@@ -48,314 +47,423 @@ public class WidgetSearch
 			switch (segments[i])
 			{
 				case "id":
-					searchList.put(ID, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(ID, Integer.parseInt(segments[i + 1]));
 					break;
 				case "type":
-					searchList.put(TYPE, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(TYPE, Integer.parseInt(segments[i + 1]));
 					break;
 				case "contenttype":
-					searchList.put(CONTENTTYPE, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(CONTENTTYPE, Integer.parseInt(segments[i + 1]));
 					break;
 				case "parentid":
-					searchList.put(PARENTID, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(PARENTID, Integer.parseInt(segments[i + 1]));
 					break;
 				case "selfhidden":
 					if (segments[i + 1].equals("true"))
 					{
-						searchList.put(SELFHIDDEN, true);
+						searchTerms.put(SELFHIDDEN, true);
 					}
 					else
-						{
-						searchList.put(SELFHIDDEN, false);
+					{
+						searchTerms.put(SELFHIDDEN, false);
 					}
 					break;
 				case "hidden":
 					if (segments[i + 1].equals("true"))
 					{
-						searchList.put(HIDDEN, true);
+						searchTerms.put(HIDDEN, true);
 					}
 					else
-						{
-						searchList.put(HIDDEN, false);
+					{
+						searchTerms.put(HIDDEN, false);
 					}
 					break;
 				case "text":
-					searchList.put(TEXT, segments[i + 1]);
+					searchTerms.put(TEXT, segments[i + 1]);
 					break;
 				case "textcolor":
-					searchList.put(TEXTCOLOR, segments[i + 1]);
+					searchTerms.put(TEXTCOLOR, segments[i + 1]);
 					break;
 				case "name":
-					searchList.put(NAME, segments[i + 1]);
+					searchTerms.put(NAME, segments[i + 1]);
 					break;
 				case "itemid":
-					searchList.put(ITEMID, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(ITEMID, Integer.parseInt(segments[i + 1]));
 					break;
 				case "itemquantity":
-					searchList.put(ITEMQUANTITY, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(ITEMQUANTITY, Integer.parseInt(segments[i + 1]));
 					break;
 				case "modelid":
-					searchList.put(MODELID, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(MODELID, Integer.parseInt(segments[i + 1]));
 					break;
 				case "spriteid":
-					searchList.put(SPRITEID, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(SPRITEID, Integer.parseInt(segments[i + 1]));
 					break;
 				case "width":
-					searchList.put(WIDTH, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(WIDTH, Integer.parseInt(segments[i + 1]));
 					break;
 				case "height":
-					searchList.put(HEIGHT, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(HEIGHT, Integer.parseInt(segments[i + 1]));
 					break;
 				case "relativex":
-					searchList.put(RELATIVEX, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(RELATIVEX, Integer.parseInt(segments[i + 1]));
 					break;
 				case "relativey":
-					searchList.put(RELATIVEY, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(RELATIVEY, Integer.parseInt(segments[i + 1]));
 					break;
 				case "canvaslocation":
 					String canvasSegments[] = segments[i + 1].split("[,]");
-					searchList.put(CANVASLOCATION, new Point(Integer.parseInt(canvasSegments[0]), Integer.parseInt(canvasSegments[1])));
+					searchTerms.put(CANVASLOCATION, new Point(Integer.parseInt(canvasSegments[0]), Integer.parseInt(canvasSegments[1])));
 					break;
 				case "bounds":
 					String boundsSegments[] = segments[i + 1].split("[,]");
-					searchList.put(BOUNDS, new Rectangle(Integer.parseInt(boundsSegments[0]), Integer.parseInt(boundsSegments[1]), Integer.parseInt(boundsSegments[2]), Integer.parseInt(boundsSegments[3])));
+					searchTerms.put(BOUNDS, new Rectangle(Integer.parseInt(boundsSegments[0]), Integer.parseInt(boundsSegments[1]), Integer.parseInt(boundsSegments[2]), Integer.parseInt(boundsSegments[3])));
 					break;
 				case "scrollx":
-					searchList.put(SCROLLX, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(SCROLLX, Integer.parseInt(segments[i + 1]));
 					break;
 				case "scrolly":
-					searchList.put(SCROLLY, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(SCROLLY, Integer.parseInt(segments[i + 1]));
 					break;
 				case "originalx":
-					searchList.put(ORIGINALX, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(ORIGINALX, Integer.parseInt(segments[i + 1]));
 					break;
 				case "originaly":
-					searchList.put(ORIGINALY, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(ORIGINALY, Integer.parseInt(segments[i + 1]));
 					break;
 				case "paddingx":
-					searchList.put(PADDINGX, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(PADDINGX, Integer.parseInt(segments[i + 1]));
 					break;
 				case "paddingy":
-					searchList.put(PADDINGY, Integer.parseInt(segments[i + 1]));
+					searchTerms.put(PADDINGY, Integer.parseInt(segments[i + 1]));
 					break;
 			}
 		}
 	}
 
 
-
-
-	public boolean widgetResults (Widget widget)
+	public boolean isMatch(Widget widget)
 	{
-		for (int i = 0; i < searchList.size(); i++)
+		//For Multi-field searches, if a single search term doesn't also match a widget then false is input causing false to be returned.
+		ArrayList<Boolean> multiSearchMatch =  new ArrayList<>();
+
+		if (searchTerms.containsKey("Id"))
 		{
-			//we cast all of the widget text strings to lowercase to match the value we put in the hashmap above
-
-			if (searchList.containsKey("Id"))
+			if (widget.getId() == searchTerms.get(ID))
 			{
-				if (widget.getId() == searchList.get(ID))
-				{
-					return true;
-				}
+				multiSearchMatch.add(true);
 			}
-
-			if (searchList.containsKey("Type"))
+			else
 			{
-				if (widget.getType() == searchList.get(TYPE))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("ContentType"))
-			{
-				if (widget.getContentType() == searchList.get(CONTENTTYPE))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("ParentId"))
-			{
-				if (widget.getParentId() == searchList.get(PARENTID))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("SelfHidden"))
-			{
-				if (widget.isSelfHidden() == searchList.get(SELFHIDDEN))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("Hidden"))
-			{
-				if (widget.isHidden() == searchList.get(HIDDEN))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("Text"))
-			{
-				if (widget.getText().toLowerCase().contains(searchList.get(TEXT)))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("TextColor"))
-			{
-				//Textcolor is a hex value but is default to 0 so for some reason it returns as an Int when most of the
-				//time we want to treat it as a string due to it being hex, so we convert it here.
-				if (Integer.toString(widget.getTextColor(), 16).equals(searchList.get(TEXTCOLOR)))
-				{
-					return true;
-				}
-
-
-			}
-
-			if (searchList.containsKey("Name"))
-			{
-				if (widget.getName().toLowerCase().contains(searchList.get(NAME)))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("ItemId"))
-			{
-				if (widget.getItemId() == searchList.get(ITEMID))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("ItemQuantity"))
-			{
-				if (widget.getItemQuantity() == searchList.get(ITEMQUANTITY))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("ModelId"))
-			{
-				if (widget.getModelId() == searchList.get(MODELID))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("SpriteId"))
-			{
-				if (widget.getSpriteId() == searchList.get(SPRITEID))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("Width"))
-			{
-				if (widget.getWidth() == searchList.get(WIDTH))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("Height"))
-			{
-				if (widget.getHeight() == searchList.get(HEIGHT))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("RelativeX"))
-			{
-				if (widget.getRelativeX() == searchList.get(RELATIVEX))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("RelativeY"))
-			{
-				if (widget.getRelativeY() == searchList.get(RELATIVEY))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("CanvasLocation"))
-			{
-				if (widget.getCanvasLocation().equals(searchList.get(CANVASLOCATION)))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("Bounds"))
-			{
-				if (widget.getBounds().equals(searchList.get(BOUNDS)))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("ScrollX"))
-			{
-				if (widget.getScrollX() == searchList.get(SCROLLX))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("ScrollY"))
-			{
-				if (widget.getScrollY() == searchList.get(SCROLLY))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("OriginalX"))
-			{
-				if (widget.getOriginalX() == searchList.get(ORIGINALX))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("OriginalY"))
-			{
-				if (widget.getOriginalY() == searchList.get(ORIGINALY))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("PaddingX"))
-			{
-				if (widget.getPaddingX() == searchList.get(PADDINGX))
-				{
-					return true;
-				}
-			}
-
-			if (searchList.containsKey("PaddingY"))
-			{
-				if (widget.getPaddingY() == searchList.get(PADDINGY))
-				{
-					return true;
-				}
+				multiSearchMatch.add(false);
 			}
 		}
-		return false;
+
+		if (searchTerms.containsKey("Type"))
+		{
+			if (widget.getType() == searchTerms.get(TYPE))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("ContentType"))
+		{
+			if (widget.getContentType() == searchTerms.get(CONTENTTYPE))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("ParentId"))
+		{
+			if (widget.getParentId() == searchTerms.get(PARENTID))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("SelfHidden"))
+		{
+			if (widget.isSelfHidden() == searchTerms.get(SELFHIDDEN))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("Hidden"))
+		{
+			if (widget.isHidden() == searchTerms.get(HIDDEN))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("Text"))
+		{
+			if (widget.getText().toLowerCase().contains(searchTerms.get(TEXT)))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("TextColor"))
+		{
+			//Textcolor is a hex value but is default to 0 so for some reason it returns as an Int when most of the
+			//time we want to treat it as a string due to it being hex, so we convert it here.
+			if (Integer.toString(widget.getTextColor(), 16).equals(searchTerms.get(TEXTCOLOR)))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("Name"))
+		{
+			if (widget.getName().toLowerCase().contains(searchTerms.get(NAME)))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("ItemId"))
+		{
+			if (widget.getItemId() == searchTerms.get(ITEMID))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("ItemQuantity"))
+		{
+			if (widget.getItemQuantity() == searchTerms.get(ITEMQUANTITY))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("ModelId"))
+		{
+			if (widget.getModelId() == searchTerms.get(MODELID))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("SpriteId"))
+		{
+			if (widget.getSpriteId() == searchTerms.get(SPRITEID))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("Width"))
+		{
+			if (widget.getWidth() == searchTerms.get(WIDTH))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("Height"))
+		{
+			if (widget.getHeight() == searchTerms.get(HEIGHT))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("RelativeX"))
+		{
+			if (widget.getRelativeX() == searchTerms.get(RELATIVEX))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("RelativeY"))
+		{
+			if (widget.getRelativeY() == searchTerms.get(RELATIVEY))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("CanvasLocation"))
+		{
+			if (widget.getCanvasLocation().equals(searchTerms.get(CANVASLOCATION)))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("Bounds"))
+		{
+			if (widget.getBounds().equals(searchTerms.get(BOUNDS)))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("ScrollX"))
+		{
+			if (widget.getScrollX() == searchTerms.get(SCROLLX))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("ScrollY"))
+		{
+			if (widget.getScrollY() == searchTerms.get(SCROLLY))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("OriginalX"))
+		{
+			if (widget.getOriginalX() == searchTerms.get(ORIGINALX))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("OriginalY"))
+		{
+			if (widget.getOriginalY() == searchTerms.get(ORIGINALY))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("PaddingX"))
+		{
+			if (widget.getPaddingX() == searchTerms.get(PADDINGX))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		if (searchTerms.containsKey("PaddingY"))
+		{
+			if (widget.getPaddingY() == searchTerms.get(PADDINGY))
+			{
+				multiSearchMatch.add(true);
+			}
+			else
+			{
+				multiSearchMatch.add(false);
+			}
+		}
+
+		//If not even a single match was found set false to return false.
+		if (multiSearchMatch.isEmpty())
+		{
+			multiSearchMatch.add(false);
+		}
+
+		//if at any point a widget didn't match all search terms and assigned false then exit the method and try the next widget
+		if (multiSearchMatch.contains(false))
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
 	}
 
 	//If necessary this can be moved to it's own file but I figured best not clutter the file system for a group of keys used once.
