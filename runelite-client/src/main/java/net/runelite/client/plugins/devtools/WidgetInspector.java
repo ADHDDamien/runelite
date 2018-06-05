@@ -294,16 +294,16 @@ class WidgetInspector extends JFrame
 					if (childNode != null)
 					{
 						root.add(childNode);
-						if (searchIsActive && widgetSearch.isMatch(widget))
+						if (searchIsActive && widgetSearch.isMatch(widget) || readyToSelectWidget && widgetSearch.matchesMousePosition(widget.getBounds(), mousePos))
 						{
 							searchNodes.add(childNode);
 							widgetResults.add(widget);
 						}
-						if (readyToSelectWidget && widgetSearch.matchesMousePosition(widget.getBounds(), mousePos))
-						{
-							searchNodes.add(childNode);
-							widgetResults.add(widget);
-						}
+//						if (readyToSelectWidget && widgetSearch.matchesMousePosition(widget.getBounds(), mousePos))
+//						{
+//							searchNodes.add(childNode);
+//							widgetResults.add(widget);
+//						}
 					}
 				}
 
@@ -364,15 +364,10 @@ class WidgetInspector extends JFrame
 				if (childNode != null)
 				{
 					node.add(childNode);
-					if (searchIsActive && widgetSearch.isMatch(component))
+					if (searchIsActive && widgetSearch.isMatch(component) || readyToSelectWidget && widgetSearch.matchesMousePosition(component.getBounds(), mousePos))
 					{
 						searchNodes.add(childNode);
 						widgetResults.add(component);
-					}
-					if (readyToSelectWidget && widgetSearch.matchesMousePosition(component.getBounds(), mousePos))
-					{
-						searchNodes.add(childNode);
-						widgetResults.add(widget);
 					}
 				}
 			}
@@ -387,15 +382,10 @@ class WidgetInspector extends JFrame
 				if (childNode != null)
 				{
 					node.add(childNode);
-					if (searchIsActive && widgetSearch.isMatch(component))
+					if (searchIsActive && widgetSearch.isMatch(component) || readyToSelectWidget && widgetSearch.matchesMousePosition(component.getBounds(), mousePos))
 					{
 						searchNodes.add(childNode);
 						widgetResults.add(component);
-					}
-					if (readyToSelectWidget && widgetSearch.matchesMousePosition(component.getBounds(), mousePos))
-					{
-						searchNodes.add(childNode);
-						widgetResults.add(widget);
 					}
 				}
 			}
@@ -410,15 +400,10 @@ class WidgetInspector extends JFrame
 				if (childNode != null)
 				{
 					node.add(childNode);
-					if (searchIsActive && widgetSearch.isMatch(component))
+					if (searchIsActive && widgetSearch.isMatch(component) || readyToSelectWidget && widgetSearch.matchesMousePosition(component.getBounds(), mousePos))
 					{
 						searchNodes.add(childNode);
 						widgetResults.add(component);
-					}
-					if (readyToSelectWidget && widgetSearch.matchesMousePosition(component.getBounds(), mousePos))
-					{
-						searchNodes.add(childNode);
-						widgetResults.add(widget);
 					}
 				}
 			}
