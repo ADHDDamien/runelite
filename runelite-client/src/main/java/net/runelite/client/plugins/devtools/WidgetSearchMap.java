@@ -24,10 +24,9 @@
  */
 package net.runelite.client.plugins.devtools;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.Set;
 
 public class WidgetSearchMap
 {
@@ -53,20 +52,14 @@ public class WidgetSearchMap
 		return baseMap.size();
 	}
 
+	public Set keySet()
+	{
+		return baseMap.keySet();
+	}
+
 	public void clear()
 	{
 		baseMap.clear();
-	}
-
-	public List getKeyList()
-	{
-		List<String> keys = new ArrayList<>();
-
-		for (Map.Entry<String, Object> entry : baseMap.entrySet())
-		{
-			keys.add(entry.getKey());
-		}
-		return keys;
 	}
 
 }

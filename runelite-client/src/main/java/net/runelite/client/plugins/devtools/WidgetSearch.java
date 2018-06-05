@@ -25,7 +25,6 @@
 package net.runelite.client.plugins.devtools;
 
 import java.awt.Rectangle;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Point;
 import net.runelite.api.widgets.Widget;
@@ -144,11 +143,10 @@ public class WidgetSearch
 	public boolean isMatch(Widget widget)
 	{
 		int counter = 0;
-		List<String> keys = searchTerms.getKeyList();
 
-		for (String key : keys)
+		for (Object key : searchTerms.keySet())
 		{
-			switch (key)
+			switch ((String) key)
 			{
 				case "Id":
 					counter += ((widget.getId() == (Integer) searchTerms.get("Id")) ? 1 : -100);
@@ -236,5 +234,6 @@ public class WidgetSearch
 		{
 			return true;
 		}
+
 	}
 }
