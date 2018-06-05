@@ -24,7 +24,9 @@
  */
 package net.runelite.client.plugins.devtools;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class WidgetSearchMap
@@ -36,17 +38,14 @@ public class WidgetSearchMap
 		baseMap = new HashMap<>();
 	}
 
-	@SuppressWarnings("unchecked")
-	public <T> T put(Key<T> key, T value)
+	public void put(String key, Object value)
 	{
-		return (T) baseMap.put(key.getName(), value);
+		baseMap.put(key, value);
 	}
 
-	@SuppressWarnings("unchecked")
-	public <T> T get(Key<T> key)
+	public Object get(String key)
 	{
-		T value = (T) baseMap.get(key.getName());
-		return value;
+		return baseMap.get(key);
 	}
 
 	public int size()
@@ -59,23 +58,15 @@ public class WidgetSearchMap
 		baseMap.clear();
 	}
 
-	public boolean containsKey(String key)
+	public List getKeyList()
 	{
-		return baseMap.containsKey(key);
+		List<String> keys = new ArrayList<>();
+
+		for (Map.Entry<String, Object> entry : baseMap.entrySet())
+		{
+			keys.add(entry.getKey());
+		}
+		return keys;
 	}
 
-	public static class Key<T>
-	{
-		private final String keyName;
-
-		public Key(String key)
-		{
-			this.keyName = key;
-		}
-
-		public String getName()
-		{
-			return keyName;
-		}
-	}
 }
