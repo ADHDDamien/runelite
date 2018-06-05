@@ -82,8 +82,8 @@ class WidgetInspector extends JFrame
 	private WidgetSearch widgetSearch = new WidgetSearch();
 	private static final Map<Integer, WidgetInfo> widgetIdMap = new HashMap<>();
 
-	private boolean readyToSelect;
-	private boolean isSearching = false;
+	private boolean readyToSelectWidget;
+	private boolean searchIsActive;
 	private int searchIndex = 0;
 
 	@Inject
@@ -149,7 +149,7 @@ class WidgetInspector extends JFrame
 		final JButton refreshWidgetsBtn = new JButton("Load Widgets");
 		refreshWidgetsBtn.addActionListener(e ->
 		{
-			if (client.getGameState().equals(GameState.LOGGED_IN))
+			if (loggedIn())
 			{
 				refreshWidgets(client.getWidgetRoots());
 			}
@@ -163,9 +163,9 @@ class WidgetInspector extends JFrame
 		final JButton widgetSelectorBtn = new JButton("Select in-game Widgets");
 		widgetSelectorBtn.addActionListener(e ->
 		{
-			if (client.getGameState().equals(GameState.LOGGED_IN))
+			if (loggedIn())
 			{
-				readyToSelect = true;
+				readyToSelectWidget = true;
 			}
 			else
 				{
@@ -212,7 +212,7 @@ class WidgetInspector extends JFrame
 	@Subscribe
 	private void onWidgetClick(MenuOptionClicked event)
 	{
-		if (readyToSelect)
+		if (readyToSelectWidget)
 		{
 
 			List<Integer> groupIDs = new ArrayList<>();
@@ -244,18 +244,18 @@ class WidgetInspector extends JFrame
 			}
 
 			refreshWidgets(locatedWidgets);
-			readyToSelect = false;
+			readyToSelectWidget = false;
 		}
 	}
 
 	private void startSearch(String search)
 	{
-		if (client.getGameState().equals(GameState.LOGGED_IN))
+		if (loggedIn())
 		{
 			searchIndex = 0;
 			searchNodes.clear();
 			widgetResults.clear();
-			isSearching = true;
+			searchIsActive = true;
 			widgetSearch.searchRequest(search);
 			refreshWidgets(client.getWidgetRoots());
 		}
@@ -287,6 +287,11 @@ class WidgetInspector extends JFrame
 		pack();
 	}
 
+	private Boolean loggedIn()
+	{
+		return client.getGameState().equals(GameState.LOGGED_IN);
+	}
+
 	private void refreshWidgets(Widget[] widgets )
 	{
 		new SwingWorker<DefaultMutableTreeNode, Void>()
@@ -296,7 +301,8 @@ class WidgetInspector extends JFrame
 			{
 				Widget[] rootWidgets = widgets;
 				DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-				if (!isSearching)
+				//Do not clear fields if a search is active
+				if (!searchIsActive)
 				{
 					plugin.currentWidget = null;
 					plugin.itemIndex = -1;
@@ -308,13 +314,10 @@ class WidgetInspector extends JFrame
 					if (childNode != null)
 					{
 						root.add(childNode);
-						if (isSearching)
+						if (searchIsActive && widgetSearch.isMatch(widget))
 						{
-							if (widgetSearch.isMatch(widget))
-							{
-								searchNodes.add(childNode);
-								widgetResults.add(widget);
-							}
+							searchNodes.add(childNode);
+							widgetResults.add(widget);
 						}
 					}
 				}
@@ -331,19 +334,21 @@ class WidgetInspector extends JFrame
 					plugin.itemIndex = -1;
 					refreshInfo();
 					widgetTree.setModel(new DefaultTreeModel(get()));
-					if (isSearching)
+
+					if (searchIsActive)
 					{
 						updateResults();
 						nextResultBtn.setEnabled(true);
-						isSearching = false;
+						searchIsActive = false;
 					}
 					else
 						{
-						//reset search iterator button if loading widgets and not searching
+						//reset search iterator button incase you are loading widgets after a search
 						searchIndex = 0;
 						nextResultBtn.setText("Next Result");
 						nextResultBtn.setEnabled(false);
 					}
+
 				}
 				catch (InterruptedException | ExecutionException ex)
 				{
@@ -371,14 +376,10 @@ class WidgetInspector extends JFrame
 				if (childNode != null)
 				{
 					node.add(childNode);
-
-					if (isSearching)
+					if (searchIsActive && widgetSearch.isMatch(component))
 					{
-						if (widgetSearch.isMatch(component))
-						{
-							searchNodes.add(childNode);
-							widgetResults.add(component);
-						}
+						searchNodes.add(childNode);
+						widgetResults.add(component);
 					}
 				}
 			}
@@ -393,13 +394,10 @@ class WidgetInspector extends JFrame
 				if (childNode != null)
 				{
 					node.add(childNode);
-					if (isSearching)
+					if (searchIsActive && widgetSearch.isMatch(component))
 					{
-						if (widgetSearch.isMatch(component))
-						{
-							searchNodes.add(childNode);
-							widgetResults.add(component);
-						}
+						searchNodes.add(childNode);
+						widgetResults.add(component);
 					}
 				}
 			}
@@ -414,13 +412,10 @@ class WidgetInspector extends JFrame
 				if (childNode != null)
 				{
 					node.add(childNode);
-					if (isSearching)
+					if (searchIsActive && widgetSearch.isMatch(component))
 					{
-						if (widgetSearch.isMatch(component))
-						{
-							searchNodes.add(childNode);
-							widgetResults.add(component);
-						}
+						searchNodes.add(childNode);
+						widgetResults.add(component);
 					}
 				}
 			}
