@@ -33,6 +33,8 @@ import com.google.inject.Inject;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -171,13 +173,13 @@ class WidgetInspector extends JFrame
 			}
 			else
 				{
-				JOptionPane.showMessageDialog(null, "Please log in to the game before trying to load widgets.");
+				JOptionPane.showMessageDialog(null, "Please log in to the game before trying to select widgets.");
 			}
 		});
 		bottomPanel.add(widgetSelectorBtn);
 
 		final JButton searchHelpBtn = new JButton("Search Help");
-		searchHelpBtn.addActionListener(e -> JOptionPane.showMessageDialog(null, "Search examples: \nId:10747904 where 10747904 is the Widget ID you are searching for\n\nCanvasLocation:0,0 with 0,0 being the X & Y in the Point\n\nText:Bank Of Runescape (Partial text searches work as well)\n\nHidden=true where true is the boolean result you are searching for, etc.\n\nAll fields are searchable.\n\nMultiple searches:\nChain searches with a pipe separating each search term to get more exact results, for example Width:1642|Height:1057 or Text:Bank Of Runescape|Hidden:false\n\nThe enter key submits your search."));
+		searchHelpBtn.addActionListener(e -> JOptionPane.showMessageDialog(null, "Search examples: \nId:10747904 where 10747904 is the Widget ID you are searching for\n\nCanvasLocation:0,0 with 0,0 being the X & Y in the Point\n\nText:Bank Of Runescape (Partial text searches work as well)\n\nHidden=true where true is the boolean result you are searching for, etc.\n\nAll fields are searchable.\n\nMultiple searches:\nChain searches with a pipe separating each search term to get more exact results, for example Width:1642|Height:1057 or Text:Bank Of Runescape|Hidden:false\n\nThe enter key submits your search.\n\nSelecting on-screen widgets:\nClick \"Select in-game Widgets\" and then click the widget in game you wish to find in the list."));
 		bottomPanel.add(searchHelpBtn);
 
 		nextResultBtn = new JButton("Next Result");
@@ -194,6 +196,17 @@ class WidgetInspector extends JFrame
 		searchField.setBackground(Color.GRAY);
 		searchField.setText("Enter search here...");
 		searchField.addActionListener(e -> startSearch(searchField.getText()));
+		searchField.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseReleased(MouseEvent e)
+			{
+				if (searchField.getText().equals("Enter search here..."))
+				{
+					searchField.setText("");
+				}
+			}
+		});
 		JScrollPane scrollPane = new JScrollPane(searchField);
 
 		add(scrollPane, BorderLayout.NORTH);
@@ -240,7 +253,7 @@ class WidgetInspector extends JFrame
 			refreshWidgets(client.getWidgetRoots());
 		}
 		else
-			{
+		{
 			JOptionPane.showMessageDialog(null, "Please log in to the game before trying to search widgets.");
 		}
 	}
@@ -299,11 +312,6 @@ class WidgetInspector extends JFrame
 							searchNodes.add(childNode);
 							widgetResults.add(widget);
 						}
-//						if (readyToSelectWidget && widgetSearch.matchesMousePosition(widget.getBounds(), mousePos))
-//						{
-//							searchNodes.add(childNode);
-//							widgetResults.add(widget);
-//						}
 					}
 				}
 
@@ -319,8 +327,6 @@ class WidgetInspector extends JFrame
 					plugin.itemIndex = -1;
 					refreshInfo();
 					widgetTree.setModel(new DefaultTreeModel(get()));
-
-
 					//will need to come through here later and update this to work with eyedropper data to iterate the searches
 					if (searchIsActive || readyToSelectWidget)
 					{
