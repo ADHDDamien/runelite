@@ -41,14 +41,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.swing.*;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.SwingWorker;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -85,6 +86,7 @@ class WidgetInspector extends JFrame
 	private boolean readyToSelectWidget;
 	private boolean searchIsActive;
 	private int searchIndex = 0;
+	private Point mousePos;
 
 	@Inject
 	WidgetInspector(DevToolsPlugin plugin, Client client, WidgetInfoTableModel infoTableModel, DevToolsConfig config, EventBus eventBus)
@@ -214,37 +216,15 @@ class WidgetInspector extends JFrame
 	{
 		if (readyToSelectWidget)
 		{
-
-			List<Integer> groupIDs = new ArrayList<>();
-			Point mouse = client.getMouseCanvasPosition();
-			WidgetInfo[] widgets = WidgetInfo.values();
-			Widget[] locatedWidgets = new Widget[1000];
+			if (searchNodes.size() > 0 && widgetResults.size() > 0)
+			{
+				searchNodes.clear();
+				widgetResults.clear();
+			}
+			searchIndex = 0;
+			mousePos = client.getMouseCanvasPosition();
 			event.consume();
-
-			for (WidgetInfo w : widgets)
-			{
-				if (client.getGroup(w.getGroupId()) != null)
-				{
-					if (!groupIDs.contains(w.getGroupId()))
-					{
-						groupIDs.add(w.getGroupId());
-					}
-				}
-			}
-
-			for ( int id = 0; id < groupIDs.size(); id++)
-			{
-				for (int i = 0; i < client.getGroup(groupIDs.get(id)).length; i++)
-				{
-					if (client.getWidget(groupIDs.get(id), i).contains(mouse))
-					{
-						locatedWidgets[i] = client.getWidget(groupIDs.get(id), i);
-					}
-				}
-			}
-
-			refreshWidgets(locatedWidgets);
-			readyToSelectWidget = false;
+			refreshWidgets(client.getWidgetRoots());
 		}
 	}
 
@@ -302,7 +282,7 @@ class WidgetInspector extends JFrame
 				Widget[] rootWidgets = widgets;
 				DefaultMutableTreeNode root = new DefaultMutableTreeNode();
 				//Do not clear fields if a search is active
-				if (!searchIsActive)
+				if (!searchIsActive && !readyToSelectWidget)
 				{
 					plugin.currentWidget = null;
 					plugin.itemIndex = -1;
@@ -315,6 +295,11 @@ class WidgetInspector extends JFrame
 					{
 						root.add(childNode);
 						if (searchIsActive && widgetSearch.isMatch(widget))
+						{
+							searchNodes.add(childNode);
+							widgetResults.add(widget);
+						}
+						if (readyToSelectWidget && widgetSearch.matchesMousePosition(widget.getBounds(), mousePos))
 						{
 							searchNodes.add(childNode);
 							widgetResults.add(widget);
@@ -335,10 +320,13 @@ class WidgetInspector extends JFrame
 					refreshInfo();
 					widgetTree.setModel(new DefaultTreeModel(get()));
 
-					if (searchIsActive)
+
+					//will need to come through here later and update this to work with eyedropper data to iterate the searches
+					if (searchIsActive || readyToSelectWidget)
 					{
 						updateResults();
 						nextResultBtn.setEnabled(true);
+						readyToSelectWidget = false;
 						searchIsActive = false;
 					}
 					else
@@ -381,6 +369,11 @@ class WidgetInspector extends JFrame
 						searchNodes.add(childNode);
 						widgetResults.add(component);
 					}
+					if (readyToSelectWidget && widgetSearch.matchesMousePosition(component.getBounds(), mousePos))
+					{
+						searchNodes.add(childNode);
+						widgetResults.add(widget);
+					}
 				}
 			}
 		}
@@ -399,6 +392,11 @@ class WidgetInspector extends JFrame
 						searchNodes.add(childNode);
 						widgetResults.add(component);
 					}
+					if (readyToSelectWidget && widgetSearch.matchesMousePosition(component.getBounds(), mousePos))
+					{
+						searchNodes.add(childNode);
+						widgetResults.add(widget);
+					}
 				}
 			}
 		}
@@ -416,6 +414,11 @@ class WidgetInspector extends JFrame
 					{
 						searchNodes.add(childNode);
 						widgetResults.add(component);
+					}
+					if (readyToSelectWidget && widgetSearch.matchesMousePosition(component.getBounds(), mousePos))
+					{
+						searchNodes.add(childNode);
+						widgetResults.add(widget);
 					}
 				}
 			}
