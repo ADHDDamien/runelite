@@ -28,11 +28,14 @@ import java.awt.Rectangle;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Point;
 import net.runelite.api.widgets.Widget;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 public class WidgetSearch
 {
-	WidgetSearchMap searchTerms = new WidgetSearchMap();
+	private Map searchTerms = new HashMap<String, Object>();
+
 	public void searchRequest(String search)
 	{
 		//reset hashmap for new searches
