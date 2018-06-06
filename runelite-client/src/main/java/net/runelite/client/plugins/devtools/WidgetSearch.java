@@ -25,10 +25,10 @@
 package net.runelite.client.plugins.devtools;
 
 import java.awt.Rectangle;
+import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Point;
 import net.runelite.api.widgets.Widget;
-import java.util.HashMap;
 
 @Slf4j
 public class WidgetSearch

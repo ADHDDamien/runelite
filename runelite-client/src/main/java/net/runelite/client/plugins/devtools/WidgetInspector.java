@@ -30,6 +30,7 @@ package net.runelite.client.plugins.devtools;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Inject;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -87,7 +88,7 @@ class WidgetInspector extends JFrame
 
 	private boolean readyToSelectWidget;
 	private boolean searchIsActive;
-	private int searchIndex = 0;
+	private int searchIndex;
 	private Point mousePos;
 
 	@Inject
@@ -330,6 +331,7 @@ class WidgetInspector extends JFrame
 
 					if (searchIsActive || readyToSelectWidget)
 					{
+						searchIndex = 0;
 						updateResults();
 						nextResultBtn.setEnabled(true);
 						readyToSelectWidget = false;
