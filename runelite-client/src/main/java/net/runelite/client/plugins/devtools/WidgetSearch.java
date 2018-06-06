@@ -29,21 +29,18 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Point;
 import net.runelite.api.widgets.Widget;
 import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 public class WidgetSearch
 {
-	private Map searchTerms = new HashMap<String, Object>();
+	private HashMap<String, Object> searchTerms = new HashMap<>();
 
 	public void searchRequest(String search)
 	{
-		//reset hashmap for new searches
 		searchTerms.clear();
-		//convert to lowercase for easier handling
 		search = search.toLowerCase();
-		//separate : and spaces in search to get field names and values with regex.
 		String segments[] = search.split("[:|]");
+
 		for (int i = 0; i < segments.length; i++)
 		{
 			switch (segments[i])
@@ -229,6 +226,7 @@ public class WidgetSearch
 			}
 		}
 
+		//If any case is entered and doesn't match it sets the value to -100 this way all search terms have to match a widgetIDs fields or it's impossible to return true
 		if (counter < 1)
 		{
 			return false;

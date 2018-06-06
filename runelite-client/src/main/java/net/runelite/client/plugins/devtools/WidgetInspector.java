@@ -122,6 +122,7 @@ class WidgetInspector extends JFrame
 		widgetTree.getSelectionModel().addTreeSelectionListener(e ->
 		{
 			Object selected = widgetTree.getLastSelectedPathComponent();
+
 			if (selected instanceof WidgetTreeNode)
 			{
 				WidgetTreeNode node = (WidgetTreeNode) selected;
@@ -137,6 +138,7 @@ class WidgetInspector extends JFrame
 				plugin.itemIndex = node.getWidgetItem().getIndex();
 				log.debug("Set item index to {}", plugin.itemIndex);
 			}
+
 		});
 
 		final JScrollPane treeScrollPane = new JScrollPane(widgetTree);
@@ -158,7 +160,7 @@ class WidgetInspector extends JFrame
 				refreshWidgets(client.getWidgetRoots());
 			}
 			else
-				{
+			{
 				JOptionPane.showMessageDialog(null, "Please log in to the game before trying to load widgets.");
 			}
 		});
@@ -172,7 +174,7 @@ class WidgetInspector extends JFrame
 				readyToSelectWidget = true;
 			}
 			else
-				{
+			{
 				JOptionPane.showMessageDialog(null, "Please log in to the game before trying to select widgets.");
 			}
 		});
@@ -207,10 +209,9 @@ class WidgetInspector extends JFrame
 				}
 			}
 		});
+
 		JScrollPane scrollPane = new JScrollPane(searchField);
-
 		add(scrollPane, BorderLayout.NORTH);
-
 		final JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeScrollPane, searchFieldPane);
 		add(split, BorderLayout.CENTER);
 		pack();
@@ -225,7 +226,7 @@ class WidgetInspector extends JFrame
 	}
 
 	@Subscribe
-	private void onWidgetClick(MenuOptionClicked event)
+	private void MenuOptionClicked(MenuOptionClicked event)
 	{
 		if (readyToSelectWidget)
 		{
@@ -234,6 +235,7 @@ class WidgetInspector extends JFrame
 				searchNodes.clear();
 				widgetResults.clear();
 			}
+
 			searchIndex = 0;
 			mousePos = client.getMouseCanvasPosition();
 			event.consume();
@@ -245,9 +247,13 @@ class WidgetInspector extends JFrame
 	{
 		if (loggedIn())
 		{
+			if (searchNodes.size() > 0 && widgetResults.size() > 0)
+			{
+				searchNodes.clear();
+				widgetResults.clear();
+			}
+
 			searchIndex = 0;
-			searchNodes.clear();
-			widgetResults.clear();
 			searchIsActive = true;
 			widgetSearch.searchRequest(search);
 			refreshWidgets(client.getWidgetRoots());
@@ -261,10 +267,12 @@ class WidgetInspector extends JFrame
 	private void nextResult()
 	{
 		searchIndex++;
+
 		if (searchIndex >= searchNodes.size())
 		{
 			searchIndex = 0;
 		}
+
 		updateResults();
 	}
 
@@ -273,7 +281,6 @@ class WidgetInspector extends JFrame
 		plugin.currentWidget = widgetResults.get(searchIndex);
 		plugin.itemIndex = -1;
 		refreshInfo();
-
 		widgetTree.expandPath(new TreePath(searchNodes.get(searchIndex).getPath()));
 		widgetTree.setSelectionPath(new TreePath(searchNodes.get(searchIndex).getPath()));
 		nextResultBtn.setText("Next Result: " + String.valueOf(searchIndex + 1) + "/" + searchNodes.size());
@@ -292,16 +299,9 @@ class WidgetInspector extends JFrame
 			@Override
 			protected DefaultMutableTreeNode doInBackground() throws Exception
 			{
-				Widget[] rootWidgets = widgets;
 				DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-				//Do not clear fields if a search is active
-				if (!searchIsActive && !readyToSelectWidget)
-				{
-					plugin.currentWidget = null;
-					plugin.itemIndex = -1;
-				}
 
-				for (Widget widget : rootWidgets)
+				for (Widget widget : widgets)
 				{
 					DefaultMutableTreeNode childNode = addWidget("R", widget);
 					if (childNode != null)
@@ -327,7 +327,7 @@ class WidgetInspector extends JFrame
 					plugin.itemIndex = -1;
 					refreshInfo();
 					widgetTree.setModel(new DefaultTreeModel(get()));
-					//will need to come through here later and update this to work with eyedropper data to iterate the searches
+
 					if (searchIsActive || readyToSelectWidget)
 					{
 						updateResults();
@@ -336,7 +336,7 @@ class WidgetInspector extends JFrame
 						searchIsActive = false;
 					}
 					else
-						{
+					{
 						//reset search iterator button incase you are loading widgets after a search
 						searchIndex = 0;
 						nextResultBtn.setText("Next Result");
@@ -416,7 +416,6 @@ class WidgetInspector extends JFrame
 		}
 
 		Collection<WidgetItem> items = widget.getWidgetItems();
-
 		if (items != null)
 		{
 			for (WidgetItem item : items)
