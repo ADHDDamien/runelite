@@ -446,6 +446,7 @@ class WidgetInspector extends JFrame
 					if (childNode != null)
 					{
 						root.add(childNode);
+
 						if (matchesSearch(widget) || readyToSelectWidget && matchesMousePosition(widget.getBounds(), mousePos))
 						{
 							searchNodes.add(childNode);
@@ -600,7 +601,7 @@ class WidgetInspector extends JFrame
 	{
 		if (searchMatcher == null)
 		{
-			return true;
+			return false;
 		}
 		return searchMatcher.test(widget);
 	}
